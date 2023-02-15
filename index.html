@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Shortcuts</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        input[type="text"] {
+            margin-right: 10px;
+            padding: 5px;
+            font-size: 1em;
+            width: 300px;
+        }
+
+        button {
+            padding: 5px 10px;
+            font-size: 1em;
+            background-color: #0099ff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0066cc;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #0099ff;
+            color: #fff;
+        }
+
+        .shortcutError {
+            color: red;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="content">
+        <h1>Shortcuts</h1>
+
+        <table>
+            <tr>
+                <th>Key</th>
+                <th>URL</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+            <tbody id="shortcutsTable"></tbody>
+        </table>
+
+        <div id="newShortcutBox">
+            <h2>Create a New Shortcut</h2>
+            <form id="newShortcutForm">
+                <input type="text" id="urlInput" placeholder="Enter URL">
+                <input type="text" id="keyInput" placeholder="Enter Key">
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div class="shortcutError"></div>
+
+        <h2>Go to a Shortcut</h2>
+        <form id="goToShortcutForm">
+            <input type="text" id="goToKeyInput" placeholder="Enter Key">
+            <button type="submit">Go</button>
+        </form>
+    </div>
+
+    <script>
+        // Define function to display shortcuts
+        function displayShortcuts() {
+            var shortcutsTable = document.getElementById('shortcutsTable');
+            shortcutsTable.innerHTML = '';
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                var url = localStorage.getItem(key);
+                var row = document.createElement('tr');
+                row.innerHTML = '<td>' + key + '</td><td><a href="' + url + '" target="_blank">' + url + '</a></td><td><a href="#" class="edit" data-key="' + key + '">Edit</a></td><td><a href="#" class="delete" data-key="' + key + '">Delete</a></td>';
+                shortcutsTable.appendChild(row);
+            }
+        }
+
+        // Add event listeners for edit and delete buttons
+        var editButtons = document.querySelectorAll('.edit');
+        for (var i = 0; i < editButtons.length; i++) {
+            editButtons[i].addEventListener('click', function (event) {
+                event.preventDefault();
+                var key = event.target.dataset.key;
+                var newKey = prompt('Enter a new key for this shortcut:', key);
+                if (newKey && newKey !== key) {
+                    localStorage.setItem(newKey, localStorage.getItem(key));
+                    localStorage.removeItem(key);
+                    displayShortcuts();
+                }
+            });
+        }
+        var deleteButtons = document.querySelectorAll('.delete');
+        for (var i = 0; i < deleteButtons.length; i++) {
+            deleteButtons[i].addEventListener('click', function (event) {
+                event.preventDefault();
+                var key = event.target.dataset.key;
+                if (confirm('Are you sure you want to delete this shortcut?')) {
+                    localStorage.removeItem(key);
+                    displayShortcuts();
+                }
+            });
+        }
+
+        // Display existing shortcuts
+        displayShortcuts();
+
+        // Add event listener for page load
+        // Check if URL has a URI fragment and redirect if found
+        if (window.location.hash) {
+            var goToKey = window.location.hash.substring(1);
+            if (localStorage.getItem(goToKey)) {
+                window.location.href = localStorage.getItem(goToKey);
+            } else {
+                var errorDiv = document.querySelector('.shortcutError');
+                errorDiv.innerHTML = 'No shortcut found for key: ' + goToKey;
+            }
+        }
+
+        // Automatically focus on go to shortcut input box
+        var goToKeyInput = document.getElementById('goToKeyInput');
+        goToKeyInput.focus();
+        
+        // Add event listener for new shortcut form
+        var newShortcutForm = document.getElementById('newShortcutForm');
+        newShortcutForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var urlInput = document.getElementById('urlInput');
+            var keyInput = document.getElementById('keyInput');
+            var url = urlInput.value;
+            var key = keyInput.value;
+            if (url && key) {
+                localStorage.setItem(key, url);
+                urlInput.value = '';
+                keyInput.value = '';
+                displayShortcuts();
+            } else {
+                alert('Please enter a URL and key for the shortcut.');
+            }
+        });
+
+        // Add event listener for go to shortcut form
+        var goToShortcutForm = document.getElementById('goToShortcutForm');
+        goToShortcutForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var goToKeyInput = document.getElementById('goToKeyInput');
+            var goToKey = goToKeyInput.value;
+            if (localStorage.getItem(goToKey)) {
+                window.location.href = localStorage.getItem(goToKey);
+            } else {
+                var errorDiv = document.querySelector('.shortcutError');
+                errorDiv.innerHTML = 'No shortcut found for key: ' + goToKey;
+                goToKeyInput.value = '';
+            }
+        });
+    </script>
+</body>
+
+</html>
